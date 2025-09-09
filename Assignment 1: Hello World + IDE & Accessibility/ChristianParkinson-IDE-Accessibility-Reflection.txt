@@ -1,0 +1,2 @@
+1. I tried two features of VSCode: theme and GitHub Copilot. These setting show up when you first download the IDE.
+2. People with eye sensitivity issues and/or colorblindness might benfit greatly from theme control. Beneficiaries of GitHub Copilot are any and everyone, in my opinion, but particularly those contributing to large projects are being onboarded onto an unfamiliar codebase.`
