@@ -1,2 +1,2 @@
-# CS-1400
-Work and assignments for CS 1400 @ Cal Poly Pomona
+# School Projects
+Work and assignments for CS classes @ Cal Poly Pomona
