@@ -86,9 +86,9 @@ class IEEE754Converter {
             smatch matches;
             string a, b, e;
             if (regex_search(str, matches, pattern)) {
-                a = stoi(matches[1]);
-                b = stoi(matches[2]);
-                e = stoi(matches[3]);
+                a = matches[1];
+                b = matches[2];
+                e = matches[3];
             } else {
                 throw invalid_argument("Input string not in correct format");
             }
@@ -97,7 +97,11 @@ class IEEE754Converter {
         void input(string a, string b, string e) {
             //Keep leading 0s
             int a_int = stoi(a);
-            double b_double = stoi(b) / pow(10, b.length());
+            double b_double = 0;
+            for (size_t i = 0; i < b.size(); i++) {
+                if (!isdigit(b[i])) throw invalid_argument("Fractional part contains non-digit");
+                b_double += (b[i] - '0') * pow(10, -(int)(i + 1));
+            }            
             int e_int = stoi(e);
             
             if (a_int < 0) {
@@ -105,13 +109,24 @@ class IEEE754Converter {
                 a_int = abs(a_int);
             }
             
+            //debugging
+            /*cout << "a: " << a_int << endl;
+            cout << "b: " << b_double << endl;
+            cout << "e: " << e_int << endl;*/
+            
             coefficient = a_int + b_double;
-            normalizeNotation();
+            //normalizeNotation();
             exponent += e_int;
             value = coefficient * pow(10, exponent);
+            
+            //debugging
+            /*cout << "isNegative: " << isNegative << endl;
+            cout << "coefficient: " << coefficient << endl;
+            cout << "exponent: " << exponent << endl;
+            cout << "value: " << value << endl;*/
         }
         
-        string findSign() {
+        void findSign() {
             if (value == 0) {
                 fill(begin(binaryFloat), end(binaryFloat), 0);
             }
@@ -121,24 +136,23 @@ class IEEE754Converter {
             } else {
                 binaryFloat[0] = 0;
             }
-            return bitsToString(binaryFloat, 1);
         }
-        string findExponent() {
+        void findExponent() {
             // Handle special case of zero
             if (value == 0) {
                 fill(begin(binaryFloat), end(binaryFloat), 0);
             }
             // Calculate binary exponent
             baseTwoExponent = floor(log2(abs(value)));
+            //debugging
+            //cout << "baseTwoExponent: " << baseTwoExponent << endl;
             //Bias the exponent by adding 127
             baseTwoExponent += 127;
             //Convert to binary and store in the appropriate bits
             bool* temp = to_binary(baseTwoExponent, 8);
             copy(temp, temp + 8, binaryFloat + 1);
-
-            return bitsToString(binaryFloat + 1, 8);
         }
-        string findMantissa() {
+        void findMantissa() {
             if (value == 0) {
                 fill(begin(binaryFloat), end(binaryFloat), 0);
             }
@@ -147,19 +161,28 @@ class IEEE754Converter {
             if (baseTwoCoefficient < 1 || baseTwoCoefficient >= 2) {
                 throw invalid_argument("Base 2 coefficient out of range");
             }
+            //debugging
+            //cout << "baseTwoCoefficient: " << baseTwoCoefficient << endl;
             baseTwoCoefficient -= 1; //Remove leading 1
             //Convert to binary and store in the appropriate bits
             bool* temp = to_binary(baseTwoCoefficient, 23);
             copy(temp, temp + 23, binaryFloat + 9);
 
-            return bitsToString(binaryFloat + 9, 23);
         }
     public:
-        IEEE754Converter() : coefficient(0), exponent(0), isNegative(false), value(0) {
+        IEEE754Converter() : coefficient(0), exponent(0), isNegative(false), value(0), baseTwoCoefficient(0), baseTwoExponent(0) {
             fill(begin(binaryFloat), end(binaryFloat), 0);
         }
         
         void convert(string a, string b, string e) {
+            coefficient = 0;
+            baseTwoCoefficient = 0;
+            exponent = 0;
+            baseTwoExponent = 0;
+            isNegative = false;
+            value = 0;
+            fill(begin(binaryFloat), end(binaryFloat), 0);
+            
             input(a, b, e);
             findSign();
             findExponent();
@@ -171,9 +194,9 @@ class IEEE754Converter {
         }
         string output() {
             string output = "";
-            output += findSign() + " ";
-            output += findExponent() + " ";
-            output += findMantissa();
+            output += bitsToString(binaryFloat, 1) + " ";
+            output += bitsToString(binaryFloat + 1, 8) + " ";
+            output += bitsToString(binaryFloat + 9, 23);
             return output;
         }
 };
@@ -206,7 +229,8 @@ int main() {
         } else if (tolower(choice) == 'n') {
             string input;
             cout << "Enter a number in the format a.b x 10^(e): ";
-            cin >> input;
+            cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+            getline(cin, input);
             try {
                 converter.convert(input);
                 cout << "IEEE 754 representation: " << converter.output() << endl;
