@@ -1,6 +1,7 @@
 /*
 Name: Christian Parkinson 
 Date: 09/16/25
+Version: C++17
 Instructions: 
     Create a program to compute the IEEE 754 single precision version of a given number, then use the program to compute the values. The program should behave like so:
 
@@ -45,7 +46,7 @@ class IEEE754Converter {
             bool* binary = new bool[precision];
             if (n > 1) {
                 for (int i = 0; i < precision; i++) {
-                    binary[i] = n % 2;
+                    binary[precision - i - 1] = n % 2;
                     n /= 2;
                 }
             } else if (n < 0) {
@@ -71,13 +72,20 @@ class IEEE754Converter {
             }
             return binary;
         }
-
+        string bitsToString(const bool* arr, int len) {
+            string s;
+            s.reserve(len);
+            for (int i = 0; i < len; i++) {
+                s.push_back(arr[i] ? '1' : '0');
+            }
+            return s;
+        }
         auto parse(string str) {
             // Given string of the form a.b x 10^(e), parse into a, b, and e
-            regex pattern(R"(([-+]?\d+)\.(\d+)\s*x\s*10\^(\(?[-+]?\d+\)?))");
+            regex pattern(R"(([-+]?\d+)\.(\d+)\s*x\s*10\^\(?([-+]?\d+)\)?)");
             smatch matches;
-            int a, b, e;
-            if (regex_match(str, matches, pattern)) {
+            string a, b, e;
+            if (regex_search(str, matches, pattern)) {
                 a = stoi(matches[1]);
                 b = stoi(matches[2]);
                 e = stoi(matches[3]);
@@ -86,15 +94,20 @@ class IEEE754Converter {
             }
             return make_tuple(a, b, e);
         }
-        void input(int a, int b, int e) {
-            if (a < 0) {
+        void input(string a, string b, string e) {
+            //Keep leading 0s
+            int a_int = stoi(a);
+            double b_double = stoi(b) / pow(10, b.length());
+            int e_int = stoi(e);
+            
+            if (a_int < 0) {
                 isNegative = true;
-                a = abs(a);
+                a_int = abs(a_int);
             }
-
-            coefficient = a + (b / pow(10, floor(log10(b)) + 1));
+            
+            coefficient = a_int + b_double;
             normalizeNotation();
-            exponent = e;
+            exponent += e_int;
             value = coefficient * pow(10, exponent);
         }
         
@@ -108,7 +121,7 @@ class IEEE754Converter {
             } else {
                 binaryFloat[0] = 0;
             }
-            return string(binaryFloat, binaryFloat + 1);
+            return bitsToString(binaryFloat, 1);
         }
         string findExponent() {
             // Handle special case of zero
@@ -116,25 +129,21 @@ class IEEE754Converter {
                 fill(begin(binaryFloat), end(binaryFloat), 0);
             }
             // Calculate binary exponent
-            int k = floor(log2(value));
-            double floorDistance = abs(pow(2, k) - value);
-            double ceilDistance = abs(pow(2, k + 1) - value);
-            //The closer of the two powers of 2 to the value determines the exponent
-            baseTwoExponent = (floorDistance < ceilDistance) ? k : k + 1;
+            baseTwoExponent = floor(log2(abs(value)));
             //Bias the exponent by adding 127
             baseTwoExponent += 127;
             //Convert to binary and store in the appropriate bits
             bool* temp = to_binary(baseTwoExponent, 8);
             copy(temp, temp + 8, binaryFloat + 1);
 
-            return string(binaryFloat + 1, binaryFloat + 8);
+            return bitsToString(binaryFloat + 1, 8);
         }
         string findMantissa() {
             if (value == 0) {
                 fill(begin(binaryFloat), end(binaryFloat), 0);
             }
             //Calculate new coefficient for base 2
-            baseTwoCoefficient = value / pow(2, baseTwoExponent);
+            baseTwoCoefficient = value / pow(2, baseTwoExponent-127);
             if (baseTwoCoefficient < 1 || baseTwoCoefficient >= 2) {
                 throw invalid_argument("Base 2 coefficient out of range");
             }
@@ -143,14 +152,14 @@ class IEEE754Converter {
             bool* temp = to_binary(baseTwoCoefficient, 23);
             copy(temp, temp + 23, binaryFloat + 9);
 
-            return string(binaryFloat + 9, binaryFloat + 32);
+            return bitsToString(binaryFloat + 9, 23);
         }
     public:
         IEEE754Converter() : coefficient(0), exponent(0), isNegative(false), value(0) {
             fill(begin(binaryFloat), end(binaryFloat), 0);
         }
         
-        void convert(int a, int b, int e) {
+        void convert(string a, string b, string e) {
             input(a, b, e);
             findSign();
             findExponent();
@@ -172,27 +181,43 @@ class IEEE754Converter {
 
 int main() {
     IEEE754Converter converter;
-    cout << "---------------------------------------" << endl;
-    cout << "| IEEE 754 Single Precision Converter |" << endl;
-    cout << "---------------------------------------" << endl;
-    cout << "Would you like to enter parameters manually (y/n)? ";
-    char choice;
-    cin >> choice;
-    if (tolower(choice) == 'y') {
-        int a, b, e;
-        cout << "Enter integer part, a: ";
-        cin >> a;
-        cout << "Enter fractional part, b (do not enter as a decimal): ";
-        cin >> b;
-        cout << "Enter exponent, e: ";
-        cin >> e;
-        converter.convert(a, b, e);
-        cout << "IEEE 754 representation: " << converter.output() << endl;
-    } else if (choice != 'n' && choice != 'N') {
-        string input;
-        cout << "Enter a number in the format a.b x 10^(e): ";
-        cin >> input;
-        converter.convert(input);
-        cout << "IEEE 754 representation: " << converter.output() << endl;
-    } 
+    bool running = true;
+    while (running) {
+        cout << "---------------------------------------" << endl;
+        cout << "| IEEE 754 Single Precision Converter |" << endl;
+        cout << "---------------------------------------" << endl;
+        cout << "Would you like to enter parameters manually (y/n)? ";
+        char choice;
+        cin >> choice;
+        if (tolower(choice) == 'y') {
+            string a, b, e;
+            cout << "Enter integer part, a: ";
+            cin >> a;
+            cout << "Enter fractional part, b (do not enter as a decimal): ";
+            cin >> b;
+            cout << "Enter exponent, e: ";
+            cin >> e;
+            try {
+                converter.convert(a, b, e);
+                cout << "IEEE 754 representation: " << converter.output() << endl;
+            } catch (const exception& ex) {
+                cout << "Error: " << ex.what() << endl;
+            }
+        } else if (tolower(choice) == 'n') {
+            string input;
+            cout << "Enter a number in the format a.b x 10^(e): ";
+            cin >> input;
+            try {
+                converter.convert(input);
+                cout << "IEEE 754 representation: " << converter.output() << endl;
+            } catch (const exception& ex) {
+                cout << "Error: " << ex.what() << endl;
+            }
+        } 
+        cout << "Would you like to convert another number (y/n)? ";
+        cin >> choice;
+        if (tolower(choice) == 'n') {
+            running = false;
+        }
+    }
 }
