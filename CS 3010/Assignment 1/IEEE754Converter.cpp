@@ -44,7 +44,7 @@ class IEEE754Converter {
         bool* to_binary(int n, int precision) {
             // Convert integer n to binary representation as an array of booleans
             bool* binary = new bool[precision];
-            if (n > 1) {
+            if (n >= 1) {
                 for (int i = 0; i < precision; i++) {
                     binary[precision - i - 1] = n % 2;
                     n /= 2;
@@ -59,7 +59,7 @@ class IEEE754Converter {
             bool* binary = new bool[precision];
             if (n > 1) {
                 throw invalid_argument("n must be less than 1");
-            } else if (n < 1) {
+            } else if (n <= 1) {
                 for (int i = 0; i < precision; i++) {
                     n *= 2;
                     if (n >= 1) {
@@ -170,7 +170,7 @@ class IEEE754Converter {
 
         }
     public:
-        IEEE754Converter() : coefficient(0), exponent(0), isNegative(false), value(0), baseTwoCoefficient(0), baseTwoExponent(0) {
+        IEEE754Converter() : coefficient(0), baseTwoCoefficient(0), exponent(0),  baseTwoExponent(0), isNegative(false), value(0) {
             fill(begin(binaryFloat), end(binaryFloat), 0);
         }
         
@@ -202,7 +202,7 @@ class IEEE754Converter {
 };
 
 
-int main() {
+int main(int argc, char* argv[]) {
     IEEE754Converter converter;
     bool running = true;
     while (running) {
