@@ -37,6 +37,7 @@
         "cstdarg": "cpp",
         "ctime": "cpp",
         "cwctype": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "fstream": "cpp"
     }
 }

@@ -30,6 +30,7 @@ In the first case the program will use NGE, and in the second it will use SPP. I
 */
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <cmath>
@@ -108,7 +109,7 @@ class GaussianElimination {
                 }
                 for (int j = i + 1; j < numVariables; j++) {
                     T multiplier = coefficientMatrix[index[j]][i] / coefficientMatrix[index[i]][i];
-                    for (int k = i; k < numVariables; k++) {
+                    for (int k = i + 1; k < numVariables; k++) {
                         coefficientMatrix[index[j]][k] -= multiplier * coefficientMatrix[index[i]][k];
                     }
                     constants[index[j]] -= multiplier * constants[index[i]];  
@@ -133,7 +134,6 @@ class GaussianElimination {
                     T smax = 0;
                     for (int j = 0; j < numVariables; j++) {
                         smax = max(smax, abs(coefficientMatrix[k][j]));
-
                     }
                     scalingFactors[k] = smax;
                 }
@@ -162,6 +162,9 @@ class GaussianElimination {
             if (!solutionFile.is_open()) {
                 throw runtime_error("Could not open solution file for writing");
             }
+
+            solutionFile << fixed << setprecision(15);
+
             for (const T& sol : solutions) {
                 solutionFile << sol << " ";
             }
@@ -183,11 +186,11 @@ int main(int argc, char* argv[]) {
     } else {
         fileName = *pointerFileName;
     }
-    if (find(begin, end, "--spp") != end) {
+    if (find_if(begin, end, [](const char* arg) { return string(arg) == "--spp";}) != end) {
         spp = true;
     }
     try {
-        if (find(begin, end, "--double") != end) {
+        if (find_if(begin, end, [](const char* arg) { return string(arg) == "--double";}) != end) {
             GaussianElimination<double> solver(fileName, spp);
             solver.solve();
         } else {
