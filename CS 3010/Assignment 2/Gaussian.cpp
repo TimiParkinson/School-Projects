@@ -81,28 +81,23 @@ class GaussianElimination {
             problemFile.close();
 
             if (tempMatrix.size() != n + 1) {
-                throw runtime_error("File format incorrect; number of rows does not match specified size");
+                throw runtime_error("File format incorrect; expected " + to_string(n+1) + " rows, but got " + to_string(tempMatrix.size()));
             }
             numVariables = n;
             
             T val;
             coefficientMatrix.resize(n);
-            constants.resize(n);
             for (i = 0; i < n+1; i++) {
                 vector<T>& temp = (i == n) ? constants : coefficientMatrix[i];
-                temp.resize(n);
-                int tempCount = 0;
                 while (tempMatrix[i] >> val) {
                     temp.emplace_back(val);
-                    tempCount++;
                 }
-                if (tempCount != n) {
-                    cout << temp.size() << endl;
-                    throw runtime_error("File format incorrect; number of columns does not match specified size");
+                if (temp.size() != n) {
+                    throw runtime_error("File format incorrect; expected " + to_string(n) + " columns, but got " + to_string(temp.size()));
                 }
             }
             solutions.resize(n, 0);
-            scalingFactors.resize(n, 1);
+            scalingFactors.resize(n, 0);
             index.resize(n);
             iota(index.begin(), index.end(), 0); // Fill index with 0, 1, ..., n-1
         }
@@ -112,35 +107,35 @@ class GaussianElimination {
                     swap(index[scaledPartialPivoting(i)], index[i]);
                 }
                 for (int j = i + 1; j < numVariables; j++) {
-                    T multiplier = coefficientMatrix[j][i] / coefficientMatrix[i][i];
+                    T multiplier = coefficientMatrix[index[j]][i] / coefficientMatrix[index[i]][i];
                     for (int k = i; k < numVariables; k++) {
-                        coefficientMatrix[j][k] -= multiplier * coefficientMatrix[i][k];
+                        coefficientMatrix[index[j]][k] -= multiplier * coefficientMatrix[index[i]][k];
                     }
-                    constants[j] -= multiplier * constants[i];  
+                    constants[index[j]] -= multiplier * constants[index[i]];  
                 }
             }
         }
         void backSubstitution() {
-            solutions[numVariables - 1] = constants[numVariables - 1] / coefficientMatrix[numVariables - 1][numVariables - 1];
+            solutions[numVariables - 1] = constants[index[numVariables - 1]] / coefficientMatrix[index[numVariables - 1]][numVariables - 1];
             for (int i = numVariables - 2; i >= 0; i--) {
-                T sum = constants[i];
+                T sum = constants[index[i]];
                 for (int j = i + 1; j < numVariables; j++) {
-                    sum -= coefficientMatrix[i][j] * solutions[j];
+                    sum -= coefficientMatrix[index[i]][j] * solutions[j];
                 }
-                solutions[i] = sum / coefficientMatrix[i][i];
+                solutions[i] = sum / coefficientMatrix[index[i]][i];
             }
         }
         int scaledPartialPivoting(int i) {
             // check if scaling factors have been calculated
             //if (!end(scalingFactor) == find(begin(scalingFactor), end(scalingFactor), 1)) {
             if (i == 0) {
-                for (int i = 1; i < numVariables; i++) {
+                for (int k = 0; k < numVariables; k++) {
                     T smax = 0;
                     for (int j = 0; j < numVariables; j++) {
-                        smax = max(smax, abs(coefficientMatrix[i][j]));
+                        smax = max(smax, abs(coefficientMatrix[k][j]));
 
                     }
-                    scalingFactors[i] = smax;
+                    scalingFactors[k] = smax;
                 }
             }
             T rmax = 0;
