@@ -60,7 +60,11 @@ class GaussianElimination {
 
         void populateSystem() {
             // Implementation for reading the file and populating numVariables, coefficientMatrix, constants, solutions, scalingFactors, and index
-            ifstream inputfile(fileName);
+            if (fileName.substr(fileName.find_last_of('.') + 1) != "lin") {
+                throw runtime_error("File must have .lin extension");
+            }
+
+            ifstream problemFile(fileName);
             if (!inputfile.is_open()) {
                 throw runtime_error("Could not open file");
             } 
@@ -69,7 +73,7 @@ class GaussianElimination {
             int i = 0;
             int n;
             vector<stringstream> tempMatrix;
-            while(getline(inputfile, line)) {
+            while(getline(problemFile, line)) {
                 if (i == 0){
                     n = stoi(line);
                 } else {
@@ -165,5 +169,44 @@ class GaussianElimination {
             elimination();
             backSubstitution();
             // Implementation for writing the solution to a file
+            ofstream solutionFile(fileName.substr(0, fileName.find_last_of('.')) + ".sol");
+            if (!solutionFile.is_open()) {
+                throw runtime_error("Could not open solution file for writing");
+            }
+            for (const T& sol : solutions) {
+                solutionFile << sol << " ";
+            }
+            solutionFile.close();
         }
 };
+
+int main(int argc, char* argv[]) {
+    char** begin = argv;
+    char** end = argv + argc;
+    bool spp = false;
+    string fileName;
+    char** pointerFileName = find_if(begin, end, [](const char* arg) {
+        return regex_match(arg, regex(".*\\.lin$"));
+    });
+    if (pointerFileName == end) {
+        cerr << "Error: No .lin file provided" << endl;
+        return 1;
+    } else {
+        fileName = *pointerFileName;
+    }
+    if (find(begin, end, "--spp") != end) {
+        spp = true;
+    }
+    try {
+        if (find(begin, end, "--double") != end) {
+            GaussianElimination<double> solver(fileName, spp);
+            solver.solve();
+        } else {
+            GaussianElimination<float> solver(fileName, spp);
+            solver.solve();
+        }
+    } catch (const exception& e) {
+        cerr << "Error: " << e.what() << endl;
+        return 1;
+    }
+}
