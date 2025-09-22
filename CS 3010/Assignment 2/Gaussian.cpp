@@ -43,6 +43,7 @@ In the first case the program will use NGE, and in the second it will use SPP. I
 #include <ctype.h>
 #include <regex>
 #include <tuple>
+#include <chrono>
 
 
 using namespace std;
@@ -172,7 +173,12 @@ class GaussianElimination {
         }
 };
 
+double runtime(clock_t start, clock_t end) {
+    return double(end - start) / CLOCKS_PER_SEC;
+}
+
 int main(int argc, char* argv[]) {
+    
     char** begin = argv;
     char** end = argv + argc;
     bool spp = find_if(begin, end, [](const char* arg) { return string(arg) == "--spp"; }) != end;
@@ -186,6 +192,7 @@ int main(int argc, char* argv[]) {
         fileName = *pointerFileName;
     }
     try {
+        clock_t start = clock();
         if (isDouble) {
             GaussianElimination<double> solver(fileName, spp);
             solver.solve();
@@ -193,6 +200,8 @@ int main(int argc, char* argv[]) {
             GaussianElimination<float> solver(fileName, spp);
             solver.solve();
         }
+        clock_t end = clock();
+        cout << "Execution time: " << runtime(start, end) << " seconds" << endl;
     } catch (const exception& e) {
         cerr << "Error: " << e.what() << endl;
         return 1;
