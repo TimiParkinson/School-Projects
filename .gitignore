@@ -1,0 +1,18 @@
+# Ignore all build artifacts
+/build/
+*.o
+*.a
+
+# Ignore log files, but keep important.log
+logs/
+!logs/important.log
+
+# Ignore configuration files
+config.json
+
+# Ignore node modules
+node_modules/
+
+# Ignore files named "temp" anywhere in the repository
+**/temp
+CS\ 3010/Assignment\ 2/Ben's\ Eliminator
