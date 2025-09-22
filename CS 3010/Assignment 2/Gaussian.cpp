@@ -60,10 +60,6 @@ class GaussianElimination {
 
         void populateSystem() {
             // Implementation for reading the file and populating numVariables, coefficientMatrix, constants, solutions, scalingFactors, and index
-            if (fileName.substr(fileName.find_last_of('.') + 1) != "lin") {
-                throw runtime_error("File must have .lin extension");
-            }
-
             ifstream problemFile(fileName);
             if (!problemFile.is_open()) {
                 throw runtime_error("Could not open file");
@@ -85,21 +81,24 @@ class GaussianElimination {
             problemFile.close();
 
             if (tempMatrix.size() != n + 1) {
-                throw runtime_error("File format incorrect");
+                throw runtime_error("File format incorrect; number of rows does not match specified size");
             }
             numVariables = n;
             
             T val;
-            coefficientMatrix.reserve(n);
-            constants.reserve(n);
-            for (i = 0; i < n; i++) {
-                vector<T>& coefRow = (i == n-1) ? constants : coefficientMatrix[i];
-                coefRow.reserve(n);
+            coefficientMatrix.resize(n);
+            constants.resize(n);
+            for (i = 0; i < n+1; i++) {
+                vector<T>& temp = (i == n) ? constants : coefficientMatrix[i];
+                temp.resize(n);
+                int tempCount = 0;
                 while (tempMatrix[i] >> val) {
-                    coefRow.emplace_back(val);
-                    if (coefRow.size() != n) {
-                        throw runtime_error("File format incorrect");
-                    }
+                    temp.emplace_back(val);
+                    tempCount++;
+                }
+                if (tempCount != n) {
+                    cout << temp.size() << endl;
+                    throw runtime_error("File format incorrect; number of columns does not match specified size");
                 }
             }
             solutions.resize(n, 0);
@@ -123,7 +122,7 @@ class GaussianElimination {
         }
         void backSubstitution() {
             solutions[numVariables - 1] = constants[numVariables - 1] / coefficientMatrix[numVariables - 1][numVariables - 1];
-            for (int i = numVariables - 1; i > 0; i--) {
+            for (int i = numVariables - 2; i >= 0; i--) {
                 T sum = constants[i];
                 for (int j = i + 1; j < numVariables; j++) {
                     sum -= coefficientMatrix[i][j] * solutions[j];
