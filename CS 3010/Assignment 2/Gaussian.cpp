@@ -65,7 +65,7 @@ class GaussianElimination {
             }
 
             ifstream problemFile(fileName);
-            if (!inputfile.is_open()) {
+            if (!problemFile.is_open()) {
                 throw runtime_error("Could not open file");
             } 
 
@@ -77,12 +77,12 @@ class GaussianElimination {
                 if (i == 0){
                     n = stoi(line);
                 } else {
-                    tempMatrix.emplace_bacl(stringstream(line));
+                    tempMatrix.emplace_back(stringstream(line));
                 }
                 i++;
             }
 
-            inputfile.close();
+            problemFile.close();
 
             if (tempMatrix.size() != n + 1) {
                 throw runtime_error("File format incorrect");
@@ -93,11 +93,7 @@ class GaussianElimination {
             coefficientMatrix.reserve(n);
             constants.reserve(n);
             for (i = 0; i < n; i++) {
-                if (i == n-1) {
-                    vector<T>& coefRow = constants;
-                } else {
-                    vector<T>& coefRow = coefficientMatrix[i];
-                }
+                vector<T>& coefRow = (i == n-1) ? constants : coefficientMatrix[i];
                 coefRow.reserve(n);
                 while (tempMatrix[i] >> val) {
                     coefRow.emplace_back(val);
@@ -112,13 +108,12 @@ class GaussianElimination {
             iota(index.begin(), index.end(), 0); // Fill index with 0, 1, ..., n-1
         }
         void elimination() {
-
             for (int i = 0; i < numVariables - 1; i++) {
                 if (useSPP) {
-                    swap(index[scaledPartialPivoting();], index[i]);
+                    swap(index[scaledPartialPivoting(i)], index[i]);
                 }
                 for (int j = i + 1; j < numVariables; j++) {
-                    T multiplier = coefficiectMatrix[j][i] / coefficientMatrix[i][i];
+                    T multiplier = coefficientMatrix[j][i] / coefficientMatrix[i][i];
                     for (int k = i; k < numVariables; k++) {
                         coefficientMatrix[j][k] -= multiplier * coefficientMatrix[i][k];
                     }
@@ -127,13 +122,13 @@ class GaussianElimination {
             }
         }
         void backSubstitution() {
-            solution[numVariable - 1] = constants[numVariables - 1] / coefficientMatrix[numVariables - 1][numVariables - 1];
-            for (int i = numVariable - 1; i > 0; i--) {
+            solutions[numVariables - 1] = constants[numVariables - 1] / coefficientMatrix[numVariables - 1][numVariables - 1];
+            for (int i = numVariables - 1; i > 0; i--) {
                 T sum = constants[i];
-                for (int j = i + 1; j < numVairables; j++) {
-                    sum -= coefficientMatrix[i][j] * solution[j];
+                for (int j = i + 1; j < numVariables; j++) {
+                    sum -= coefficientMatrix[i][j] * solutions[j];
                 }
-                solution[i] = sum / coefficientMatrix[i][i];
+                solutions[i] = sum / coefficientMatrix[i][i];
             }
         }
         int scaledPartialPivoting(int i) {
@@ -146,13 +141,13 @@ class GaussianElimination {
                         smax = max(smax, abs(coefficientMatrix[i][j]));
 
                     }
-                    scalingFacctors[i] = smax;
+                    scalingFactors[i] = smax;
                 }
             }
             T rmax = 0;
             int pivotIndex = i;
             for (int j = i; j < numVariables; j++) {
-                T r = abs(coefficientMatrix[index[j][i]]/scalingFactors[index[j]]);
+                T r = abs(coefficientMatrix[index[j]][i]/scalingFactors[index[j]]);
                 if (r > rmax) {
                     rmax = r;
                     pivotIndex = j;
