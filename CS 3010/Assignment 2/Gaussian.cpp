@@ -163,7 +163,7 @@ class GaussianElimination {
                 throw runtime_error("Could not open solution file for writing");
             }
 
-            solutionFile << fixed << setprecision(15);
+            solutionFile << fixed << setprecision(60);
 
             for (const T& sol : solutions) {
                 solutionFile << sol << " ";
@@ -175,22 +175,18 @@ class GaussianElimination {
 int main(int argc, char* argv[]) {
     char** begin = argv;
     char** end = argv + argc;
-    bool spp = false;
+    bool spp = find_if(begin, end, [](const char* arg) { return string(arg) == "--spp"; }) != end;
     string fileName;
-    char** pointerFileName = find_if(begin, end, [](const char* arg) {
-        return regex_match(arg, regex(".*\\.lin$"));
-    });
+    char** pointerFileName = find_if(begin, end, [](const char* arg) { return regex_match(arg, regex(".*\\.lin$")); });
+    bool isDouble = find_if(begin, end, [](const char* arg) { return string(arg) == "--double"; }) != end;
     if (pointerFileName == end) {
         cerr << "Error: No .lin file provided" << endl;
         return 1;
     } else {
         fileName = *pointerFileName;
     }
-    if (find_if(begin, end, [](const char* arg) { return string(arg) == "--spp";}) != end) {
-        spp = true;
-    }
     try {
-        if (find_if(begin, end, [](const char* arg) { return string(arg) == "--double";}) != end) {
+        if (isDouble) {
             GaussianElimination<double> solver(fileName, spp);
             solver.solve();
         } else {
