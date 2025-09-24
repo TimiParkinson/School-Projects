@@ -15,4 +15,11 @@ node_modules/
 
 # Ignore files named "temp" anywhere in the repository
 **/temp
+
+# Ignore CS3010 Assignment 2 add-ons
 CS\ 3010/Assignment\ 2/Ben's\ Eliminator
+CS\ 3010/Assignment\ 2/GaussianEliminationAnalyzer.py
+CS\ 3010/Assignment\ 2/results*
+CS\ 3010/Assignment\ 2/large_sys*
+CS\ 3010/Assignment\ 2/my-results
+CS\ 3010/Assignment\ 2/analysis_env
